@@ -27,8 +27,15 @@ RUN chown -R www-data:www-data \
 RUN composer install --no-dev --optimize-autoloader
 
 # 🔧 Fix: Change Apache DocumentRoot to Laravel's /public directory
-RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|' /etc/apache2/sites-available/000-default.conf && \
-    sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s|/var/www/.*|/var/www/html/public|g' /etc/apache2/apache2.conf
+# Update DocumentRoot in default site
+RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|' /etc/apache2/sites-available/000-default.conf
+
+# Append a correct <Directory> block for Laravel's /public directory
+RUN echo '<Directory /var/www/html/public>\n\
+    Options Indexes FollowSymLinks\n\
+    AllowOverride All\n\
+    Require all granted\n\
+</Directory>' >> /etc/apache2/apache2.conf
 
 # Expose port 80 for Apache
 EXPOSE 80
